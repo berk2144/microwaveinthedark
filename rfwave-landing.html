@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RFWave — RF & Mikrodalga Araçları</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;600;700&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg0: #0f1624;
+    --bg1: #162033;
+    --bg2: #1c2a42;
+    --accent: #00cfeb;
+    --accent2: #8b72c8;
+    --accent3: #ff7a45;
+    --text: #d8e4f0;
+    --text-dim: #7a90aa;
+    --grid: rgba(0,207,235,0.06);
+    --glow: rgba(0,207,235,0.18);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg0);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* GRID BACKGROUND */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 48px 48px;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* ANIMATED WAVE CANVAS */
+  #wave-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+    opacity: 0.28;
+    pointer-events: none;
+  }
+
+  /* RADAR / ANTENNA PATTERN CANVAS */
+  #radar-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  section, nav, footer { position: relative; z-index: 1; }
+
+  /* NAV */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.2rem 4rem;
+    border-bottom: 1px solid rgba(0,229,255,0.1);
+    background: rgba(15,22,36,0.88);
+    backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.3rem;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-decoration: none;
+  }
+
+  .logo span { color: #fff; }
+
+  nav ul {
+    list-style: none;
+    display: flex;
+    gap: 2.5rem;
+  }
+
+  nav ul a {
+    text-decoration: none;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 600;
+    transition: color 0.2s;
+  }
+
+  nav ul a:hover { color: var(--accent); }
+
+  .nav-cta {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent) !important;
+    padding: 0.45rem 1.2rem;
+    border-radius: 3px;
+    font-family: 'Share Tech Mono', monospace;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .nav-cta:hover {
+    background: var(--accent) !important;
+    color: #000 !important;
+  }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 6rem 2rem 4rem;
+  }
+
+  .hero-badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.25em;
+    color: var(--accent);
+    border: 1px solid rgba(0,229,255,0.3);
+    padding: 0.35rem 1rem;
+    border-radius: 2px;
+    margin-bottom: 2rem;
+    display: inline-block;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .hero h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(3.5rem, 9vw, 7.5rem);
+    font-weight: 800;
+    line-height: 0.92;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+
+  .hero h1 .line1 { display: block; color: #fff; }
+  .hero h1 .line2 {
+    display: block;
+    color: transparent;
+    -webkit-text-stroke: 1.5px var(--accent);
+  }
+
+  .hero p {
+    max-width: 560px;
+    color: var(--text-dim);
+    font-size: 1.1rem;
+    font-weight: 300;
+    margin-bottom: 3rem;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  .hero-btns {
+    display: flex;
+    gap: 1rem;
+    animation: fadeUp 0.6s 0.3s ease both;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+    font-family: 'Barlow', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.85rem 2rem;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity 0.2s, transform 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.85rem 2rem;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 3px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: border-color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .btn-secondary:hover { border-color: rgba(255,255,255,0.4); }
+
+  /* STORE BADGES */
+  .store-row {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 3.5rem;
+    animation: fadeUp 0.6s 0.4s ease both;
+  }
+
+  .store-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 0.7rem 1.4rem;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text);
+    transition: border-color 0.2s, background 0.2s;
+    cursor: pointer;
+  }
+
+  .store-badge:hover {
+    border-color: var(--accent);
+    background: rgba(0,229,255,0.05);
+  }
+
+  .store-icon { font-size: 1.6rem; }
+
+  .store-text { text-align: left; }
+  .store-text .small { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.1em; }
+  .store-text .big { font-size: 1rem; font-weight: 600; display: block; margin-top: 1px; }
+
+  /* STATS BAR */
+  .stats-bar {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    background: rgba(22,32,51,0.7);
+    padding: 2.5rem 4rem;
+  }
+
+  .stat {
+    flex: 1;
+    text-align: center;
+    border-right: 1px solid rgba(255,255,255,0.05);
+    padding: 0 2rem;
+  }
+
+  .stat:last-child { border-right: none; }
+
+  .stat .num {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 2.2rem;
+    color: var(--accent);
+    display: block;
+  }
+
+  .stat .label {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* FEATURES */
+  .features {
+    padding: 7rem 4rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 4rem;
+  }
+
+  .section-tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.25em;
+    color: var(--accent);
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 1rem;
+  }
+
+  .section-header h2 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5px;
+    background: rgba(0,229,255,0.08);
+    border: 1px solid rgba(0,229,255,0.08);
+  }
+
+  .feature-card {
+    background: var(--bg1);
+    padding: 2.5rem;
+    transition: background 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .feature-card:hover { background: var(--bg2); }
+  .feature-card:hover::before { opacity: 1; }
+
+  .feature-icon {
+    font-size: 2rem;
+    margin-bottom: 1.2rem;
+    display: block;
+  }
+
+  .feature-card h3 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.03em;
+    margin-bottom: 0.75rem;
+  }
+
+  .feature-card p {
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+
+  .feature-card .tag {
+    display: inline-block;
+    margin-top: 1rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent);
+    border: 1px solid rgba(0,229,255,0.25);
+    padding: 0.2rem 0.6rem;
+    border-radius: 2px;
+  }
+
+  /* SPECTRUM SECTION */
+  .spectrum-section {
+    padding: 5rem 4rem;
+    background: linear-gradient(180deg, var(--bg0) 0%, #1e2f4a 50%, var(--bg0) 100%);
+    text-align: center;
+  }
+
+  .spectrum-bar {
+    margin: 3rem auto;
+    max-width: 900px;
+    position: relative;
+  }
+
+  .spectrum-gradient {
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(90deg,
+      #ff0000 0%,
+      #ff6600 10%,
+      #ffcc00 20%,
+      #00ff88 35%,
+      #00e5ff 55%,
+      #0088ff 70%,
+      #8800ff 85%,
+      #ff00ff 100%
+    );
+    margin-bottom: 1rem;
+    box-shadow: 0 0 20px rgba(0,229,255,0.3);
+  }
+
+  .spectrum-labels {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--text-dim);
+  }
+
+  .freq-bands {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 2.5rem;
+  }
+
+  .freq-pill {
+    background: rgba(0,229,255,0.07);
+    border: 1px solid rgba(0,229,255,0.18);
+    color: var(--accent);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    padding: 0.4rem 1rem;
+    border-radius: 2px;
+    letter-spacing: 0.1em;
+  }
+
+  /* DOWNLOAD CTA */
+  .download-cta {
+    padding: 7rem 4rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .download-cta::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(0,229,255,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .download-cta h2 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 1rem;
+  }
+
+  .download-cta p {
+    color: var(--text-dim);
+    font-size: 1.05rem;
+    max-width: 500px;
+    margin: 0 auto 3rem;
+  }
+
+  .version-info {
+    margin-top: 2rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+  }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid rgba(255,255,255,0.05);
+    padding: 3rem 4rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg1);
+  }
+
+  .footer-logo {
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--accent);
+    font-size: 1rem;
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+  }
+
+  .footer-links a {
+    text-decoration: none;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    transition: color 0.2s;
+  }
+
+  .footer-links a:hover { color: var(--text); }
+
+  .footer-copy {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 10px rgba(0,229,255,0.3); }
+    50%       { box-shadow: 0 0 25px rgba(0,229,255,0.6); }
+  }
+
+  .pulse { animation: pulse-glow 2.5s ease-in-out infinite; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg0); }
+  ::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.3); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<canvas id="wave-canvas"></canvas>
+<canvas id="radar-canvas"></canvas>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="logo">RF<span>Wave</span></a>
+  <ul>
+    <li><a href="#features">Özellikler</a></li>
+    <li><a href="#spectrum">Spektrum</a></li>
+    <li><a href="#download">İndir</a></li>
+    <li><a href="#download" class="nav-cta">Ücretsiz Dene</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <span class="hero-badge">▸ RF &amp; MİKRODALGA MÜHENDİSLİĞİ PLATFORMU</span>
+  <h1>
+    <span class="line1">SİNYALİNİ</span>
+    <span class="line2">ANALİZ ET</span>
+  </h1>
+  <p>Antenden alıcıya her noktada RF analizi, empedans eşleştirme, gürültü hesaplama ve spektrum yönetimi tek uygulamada.</p>
+  <div class="hero-btns">
+    <a href="#download" class="btn-primary pulse">
+      ↓ &nbsp;Uygulamayı İndir
+    </a>
+    <a href="#features" class="btn-secondary">
+      Özellikleri Gör →
+    </a>
+  </div>
+
+  <div class="store-row">
+    <a class="store-badge" href="#download">
+      <span class="store-icon">🍎</span>
+      <div class="store-text">
+        <span class="small">App Store'dan İndir</span>
+        <span class="big">iOS & macOS</span>
+      </div>
+    </a>
+    <a class="store-badge" href="#download">
+      <span class="store-icon">🤖</span>
+      <div class="store-text">
+        <span class="small">Google Play'den İndir</span>
+        <span class="big">Android</span>
+      </div>
+    </a>
+    <a class="store-badge" href="#download">
+      <span class="store-icon">🪟</span>
+      <div class="store-text">
+        <span class="small">.exe İndir</span>
+        <span class="big">Windows</span>
+      </div>
+    </a>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat">
+    <span class="num">120k+</span>
+    <span class="label">Aktif Mühendis</span>
+  </div>
+  <div class="stat">
+    <span class="num">40+</span>
+    <span class="label">Hesap Aracı</span>
+  </div>
+  <div class="stat">
+    <span class="num">6 GHz</span>
+    <span class="label">Frekans Aralığı</span>
+  </div>
+  <div class="stat">
+    <span class="num">4.9 ★</span>
+    <span class="label">Uygulama Puanı</span>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="section-header">
+    <span class="section-tag">// özellikler</span>
+    <h2>Sahada ve Masaüstünde Tam Güç</h2>
+  </div>
+
+  <div class="features-grid">
+    <div class="feature-card">
+      <span class="feature-icon">📡</span>
+      <h3>Empedans Eşleştirme</h3>
+      <p>Smith chart entegrasyonu ile L, π ve T ağ tasarımı. Gerçek zamanlı S-parametre görselleştirmesi.</p>
+      <span class="tag">SMITH CHART</span>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">〰️</span>
+      <h3>Dalga Kılavuzu Analizi</h3>
+      <p>Dikdörtgen ve dairesel dalga kılavuzları için kesim frekansı, mod analizi ve güç kapasitesi hesaplama.</p>
+      <span class="tag">TE / TM MODLARI</span>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">📶</span>
+      <h3>Gürültü Figürü</h3>
+      <p>Friis formülü ile çok kademeli gürültü analizi. Kaskad NF ve IP3 hesaplama desteği.</p>
+      <span class="tag">FRIIS / CASCADE</span>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🔗</span>
+      <h3>İletim Hattı</h3>
+      <p>Mikrostrip, stripline, koaksiyel — empedans, yayılım sabiti ve kayıp hesaplama tüm ortamlar için.</p>
+      <span class="tag">MICROSTRIP / COAX</span>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">📊</span>
+      <h3>Bütçe Analizi</h3>
+      <p>Sistem genlik ve gürültü bütçesi. Her blok için kazanç, NF, IP3 girişi ve toplam sistem performansı.</p>
+      <span class="tag">LINK BUDGET</span>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🛰️</span>
+      <h3>Anten Parametreleri</h3>
+      <p>Kazanç, yönleyicilik, 3 dB genişlik, polarizasyon ve etkin alan hesaplama. Freespace path loss dahil.</p>
+      <span class="tag">RADAR / COMMS</span>
+    </div>
+  </div>
+</section>
+
+<!-- SPECTRUM -->
+<section class="spectrum-section" id="spectrum">
+  <div class="section-header">
+    <span class="section-tag">// frekans spektrumu</span>
+    <h2>Tüm RF Bantlarını Destekler</h2>
+  </div>
+
+  <div class="spectrum-bar">
+    <div class="spectrum-gradient"></div>
+    <div class="spectrum-labels">
+      <span>3 Hz</span>
+      <span>3 kHz</span>
+      <span>30 MHz</span>
+      <span>300 MHz</span>
+      <span>3 GHz</span>
+      <span>30 GHz</span>
+      <span>300 GHz</span>
+    </div>
+  </div>
+
+  <div class="freq-bands">
+    <span class="freq-pill">VLF 3–30 kHz</span>
+    <span class="freq-pill">HF 3–30 MHz</span>
+    <span class="freq-pill">VHF 30–300 MHz</span>
+    <span class="freq-pill">UHF 0.3–3 GHz</span>
+    <span class="freq-pill">L-Band 1–2 GHz</span>
+    <span class="freq-pill">S-Band 2–4 GHz</span>
+    <span class="freq-pill">C-Band 4–8 GHz</span>
+    <span class="freq-pill">X-Band 8–12 GHz</span>
+    <span class="freq-pill">Ku-Band 12–18 GHz</span>
+    <span class="freq-pill">Ka-Band 26.5–40 GHz</span>
+    <span class="freq-pill">mmWave 30–300 GHz</span>
+  </div>
+</section>
+
+<!-- DOWNLOAD CTA -->
+<section class="download-cta" id="download">
+  <div class="section-header">
+    <span class="section-tag">// indir</span>
+  </div>
+  <h2>Hesaplamaya Başla</h2>
+  <p>Ücretsiz temel paket ile hemen başla. Pro lisansla tüm araçlara sınırsız eriş.</p>
+
+  <div class="store-row" style="justify-content:center;">
+    <a class="store-badge" href="#">
+      <span class="store-icon">🍎</span>
+      <div class="store-text">
+        <span class="small">App Store</span>
+        <span class="big">iOS & macOS</span>
+      </div>
+    </a>
+    <a class="store-badge" href="#">
+      <span class="store-icon">🤖</span>
+      <div class="store-text">
+        <span class="small">Google Play</span>
+        <span class="big">Android</span>
+      </div>
+    </a>
+    <a class="store-badge" href="#">
+      <span class="store-icon">🪟</span>
+      <div class="store-text">
+        <span class="small">Windows</span>
+        <span class="big">.exe İndir</span>
+      </div>
+    </a>
+    <a class="store-badge" href="#">
+      <span class="store-icon">🐧</span>
+      <div class="store-text">
+        <span class="small">Linux</span>
+        <span class="big">.AppImage</span>
+      </div>
+    </a>
+  </div>
+
+  <p class="version-info">v3.4.2 &nbsp;|&nbsp; Son güncelleme: Mayıs 2026 &nbsp;|&nbsp; 28 MB</p>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">RFWave</div>
+  <ul class="footer-links">
+    <li><a href="#">Gizlilik</a></li>
+    <li><a href="#">Kullanım Koşulları</a></li>
+    <li><a href="#">Destek</a></li>
+    <li><a href="#">Dokümantasyon</a></li>
+  </ul>
+  <span class="footer-copy">© 2026 RFWave</span>
+</footer>
+
+<script>
+const canvas = document.getElementById('wave-canvas');
+const ctx = canvas.getContext('2d');
+
+let t = 0;
+
+function resize() {
+  // handled by resizeAll below
+}
+resize();
+window.addEventListener('resize', () => {});
+
+// Fourier square wave: sum of odd harmonics  sin(n*x)/n  n=1,3,5,...
+// phase argument keeps all waves locked to same t so they're synchronized
+function fourierSquare(x, phase, harmonics) {
+  let val = 0;
+  for (let n = 0; n < harmonics; n++) {
+    const k = 2 * n + 1; // 1, 3, 5, 7 ...
+    val += Math.sin(k * x + k * phase) / k;
+  }
+  return (4 / Math.PI) * val;
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const W = canvas.width;
+  const H = canvas.height;
+  const speed = 0.015; // shared speed — all waves move together
+  const phase = t * speed; // single phase clock
+
+  // ── Layer 1: True square wave (many harmonics) — cyan, top strip
+  {
+    const cx = ctx;
+    cx.beginPath();
+    cx.strokeStyle = 'rgba(0,207,235,0.55)';
+    cx.lineWidth = 1.8;
+    const yBase = H * 0.28;
+    const amp = 34;
+    const freq = (2 * Math.PI) / (W * 0.18);
+    for (let x = 0; x <= W; x += 1.5) {
+      const y = yBase + amp * fourierSquare(x * freq, phase, 31);
+      x === 0 ? cx.moveTo(x, y) : cx.lineTo(x, y);
+    }
+    cx.stroke();
+  }
+
+  // ── Layer 2: 1st harmonic (fundamental sine) — dim cyan
+  {
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(0,207,235,0.22)';
+    ctx.lineWidth = 1.2;
+    const yBase = H * 0.28;
+    const amp = 34;
+    const freq = (2 * Math.PI) / (W * 0.18);
+    for (let x = 0; x <= W; x += 2) {
+      const y = yBase + amp * (4 / Math.PI) * Math.sin(freq * x + phase);
+      x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  // ── Layer 3: 3rd harmonic — purple, synchronized
+  {
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(139,114,200,0.40)';
+    ctx.lineWidth = 1.2;
+    const yBase = H * 0.52;
+    const amp = 22;
+    const freq = (2 * Math.PI) / (W * 0.18);
+    for (let x = 0; x <= W; x += 2) {
+      const y = yBase + amp * (4 / Math.PI) * (1/3) * Math.sin(3 * freq * x + 3 * phase);
+      x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  // ── Layer 4: 5th harmonic — faint cyan, lower strip
+  {
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(0,207,235,0.20)';
+    ctx.lineWidth = 1.0;
+    const yBase = H * 0.52;
+    const amp = 22;
+    const freq = (2 * Math.PI) / (W * 0.18);
+    for (let x = 0; x <= W; x += 2) {
+      const y = yBase + amp * (4 / Math.PI) * (1/5) * Math.sin(5 * freq * x + 5 * phase);
+      x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  // ── Layer 5: 7th harmonic — purple faint, bottom
+  {
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(139,114,200,0.25)';
+    ctx.lineWidth = 0.9;
+    const yBase = H * 0.73;
+    const amp = 15;
+    const freq = (2 * Math.PI) / (W * 0.18);
+    for (let x = 0; x <= W; x += 2) {
+      const y = yBase + amp * (4 / Math.PI) * (1/7) * Math.sin(7 * freq * x + 7 * phase);
+      x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  // ── Layer 6: Partial square (5 harmonics) — second row, deeper blue
+  {
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(80,160,255,0.28)';
+    ctx.lineWidth = 1.4;
+    const yBase = H * 0.73;
+    const amp = 26;
+    const freq = (2 * Math.PI) / (W * 0.12);
+    for (let x = 0; x <= W; x += 1.5) {
+      const y = yBase + amp * fourierSquare(x * freq, phase, 5);
+      x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  t++;
+}
+
+// ── RADAR / ANTENNA PATTERN ──────────────────────────────────────────────────
+const rc    = document.getElementById('radar-canvas');
+const rctx  = rc.getContext('2d');
+
+let radarAngle   = 0;
+let patternPhase = 0;
+let beamDir0     = 0;   // main-lobe steering angle, station 0
+let beamDir1     = Math.PI * 0.5; // station 1 starts offset
+const SWEEP_SPEED    = 0.009;
+const BEAM_STEER_SPD = 0.003; // slower, independent rotation of main lobe
+
+function antennaPattern(theta, N) {
+  const s = Math.sin(theta);
+  const af = Math.abs(s) < 1e-6 ? 1 : Math.abs(Math.sin(N * Math.PI * s) / (N * Math.PI * s));
+  const ef = Math.pow(Math.max(0, Math.cos(theta)), 2);
+  return af * ef + 0.07 * Math.abs(Math.cos(3 * theta));
+}
+
+function drawRadar() {
+  const W = rc.width, H = rc.height;
+  rctx.clearRect(0, 0, W, H);
+
+  const stations = [
+    { cx: W * 0.82, cy: H * 0.22, R: Math.min(W, H) * 0.21, dir: 1,  offset: 0,           beamDir: beamDir0 },
+    { cx: W * 0.16, cy: H * 0.76, R: Math.min(W, H) * 0.17, dir: -1, offset: Math.PI * 0.8, beamDir: beamDir1 },
+  ];
+
+  stations.forEach((st) => {
+    const { cx, cy, R, dir, offset, beamDir } = st;
+    const N = 6 + 4 * Math.sin(patternPhase * 0.35 + offset);
+    const sweepA = radarAngle * dir + offset;
+
+    // Range rings
+    [0.33, 0.66, 1.0].forEach(rf => {
+      rctx.beginPath();
+      rctx.arc(cx, cy, R * rf, 0, Math.PI * 2);
+      rctx.strokeStyle = 'rgba(0,207,235,0.07)';
+      rctx.lineWidth = 0.8;
+      rctx.stroke();
+    });
+
+    // Crosshairs
+    rctx.strokeStyle = 'rgba(0,207,235,0.07)';
+    rctx.lineWidth = 0.7;
+    rctx.beginPath(); rctx.moveTo(cx - R, cy); rctx.lineTo(cx + R, cy); rctx.stroke();
+    rctx.beginPath(); rctx.moveTo(cx, cy - R); rctx.lineTo(cx, cy + R); rctx.stroke();
+
+    // Antenna pattern polar — rotated by beamDir so main lobe steers
+    rctx.save();
+    rctx.translate(cx, cy);
+    rctx.rotate(beamDir);
+    rctx.translate(-cx, -cy);
+
+    rctx.beginPath();
+    for (let i = 0; i <= 360; i++) {
+      const theta = (i / 360) * Math.PI * 2;
+      const r = antennaPattern(theta, N) * R * 0.92;
+      const px = cx + r * Math.cos(theta);
+      const py = cy + r * Math.sin(theta);
+      i === 0 ? rctx.moveTo(px, py) : rctx.lineTo(px, py);
+    }
+    rctx.closePath();
+    rctx.strokeStyle = 'rgba(0,207,235,0.22)';
+    rctx.lineWidth = 1;
+    rctx.stroke();
+    rctx.fillStyle = 'rgba(0,207,235,0.05)';
+    rctx.fill();
+
+    // Main lobe highlight — brighter line along beamDir axis
+    const mainLobeR = antennaPattern(0, N) * R * 0.92;
+    rctx.beginPath();
+    rctx.moveTo(cx, cy);
+    rctx.lineTo(cx + mainLobeR * Math.cos(0), cy + mainLobeR * Math.sin(0));
+    rctx.strokeStyle = 'rgba(255,180,0,0.45)';
+    rctx.lineWidth = 2.5;
+    rctx.stroke();
+
+    // Main lobe direction arrow tip glow
+    rctx.beginPath();
+    rctx.arc(cx + mainLobeR * Math.cos(0), cy + mainLobeR * Math.sin(0), 4, 0, Math.PI * 2);
+    rctx.fillStyle = 'rgba(255,200,0,0.7)';
+    rctx.fill();
+
+    rctx.restore();
+
+    // Sweep trail (pie slices fading)
+    const trailLen = Math.PI * 0.5;
+    for (let s = 0; s < 32; s++) {
+      const ratio = s / 32;
+      const a0 = sweepA - trailLen * ratio * dir;
+      const a1 = sweepA - trailLen * (ratio + 1/32) * dir;
+      rctx.beginPath();
+      rctx.moveTo(cx, cy);
+      rctx.arc(cx, cy, R * 0.96, Math.min(a0, a1), Math.max(a0, a1));
+      rctx.closePath();
+      rctx.fillStyle = `rgba(0,207,235,${(1 - ratio) * 0.11})`;
+      rctx.fill();
+    }
+
+    // Beam fan glow
+    const fanW = 0.16;
+    const fanSteps = 20;
+    for (let f = 0; f < fanSteps; f++) {
+      const ratio = f / fanSteps;
+      const a = sweepA - fanW * ratio * dir;
+      const r = antennaPattern(a - sweepA + Math.PI * 0.5, N) * R;
+      rctx.beginPath();
+      rctx.moveTo(cx, cy);
+      rctx.lineTo(cx + r * Math.cos(a), cy + r * Math.sin(a));
+      rctx.strokeStyle = `rgba(0,230,255,${(1 - ratio) * 0.5})`;
+      rctx.lineWidth = 1.5;
+      rctx.stroke();
+    }
+
+    // Leading bright beam line
+    rctx.beginPath();
+    rctx.moveTo(cx, cy);
+    rctx.lineTo(cx + R * Math.cos(sweepA), cy + R * Math.sin(sweepA));
+    rctx.strokeStyle = 'rgba(0,240,255,0.9)';
+    rctx.lineWidth = 2;
+    rctx.stroke();
+
+    // Blip dots on lobe tips
+    for (let b = 0; b < 7; b++) {
+      const ba = sweepA - b * 0.38 * dir - 0.08;
+      const br = antennaPattern(ba - sweepA + Math.PI * 0.5, N) * R * (0.55 + b * 0.07);
+      if (br > R * 0.1) {
+        const alpha = Math.max(0, 0.75 - b * 0.11);
+        rctx.beginPath();
+        rctx.arc(cx + br * Math.cos(ba), cy + br * Math.sin(ba), Math.max(0.5, 2.8 - b * 0.35), 0, Math.PI * 2);
+        rctx.fillStyle = `rgba(0,255,210,${alpha})`;
+        rctx.fill();
+      }
+    }
+
+    // Center dot
+    rctx.beginPath();
+    rctx.arc(cx, cy, 3.5, 0, Math.PI * 2);
+    rctx.fillStyle = 'rgba(0,240,255,0.85)';
+    rctx.fill();
+  });
+}
+
+// ── MAIN LOOP ────────────────────────────────────────────────────────────────
+function loop() {
+  draw();
+  drawRadar();
+  radarAngle   += SWEEP_SPEED;
+  patternPhase += 0.012;
+  beamDir0     += BEAM_STEER_SPD;
+  beamDir1     -= BEAM_STEER_SPD * 0.7;
+  requestAnimationFrame(loop);
+}
+
+function resizeAll() {
+  canvas.width = rc.width  = window.innerWidth;
+  canvas.height = rc.height = window.innerHeight;
+}
+resizeAll();
+window.addEventListener('resize', resizeAll);
+
+loop();
+</script>
+</body>
+</html>
