@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0f1624">
@@ -31,6 +31,8 @@ html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 body {
@@ -40,16 +42,17 @@ body {
   font-size: 16px;
   line-height: 1.6;
   overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
   -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;
-  touch-action: pan-y;
 }
 
 /* GRID BG */
 body::before {
   content: '';
   position: fixed;
-  inset: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   background-image:
     linear-gradient(var(--grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid) 1px, transparent 1px);
@@ -62,13 +65,14 @@ body::before {
 #wave-canvas, #radar-canvas {
   position: fixed;
   top: 0; left: 0;
-  width: 100%; height: 100%;
+  width: 100vw; height: 100vh;
   z-index: 0;
   pointer-events: none;
+  display: block;
 }
 #wave-canvas { opacity: 0.28; }
 
-section, nav, footer { position: relative; z-index: 1; }
+section, nav, footer { position: relative; z-index: 1; width: 100%; }
 
 /* ── NAV ── */
 nav {
@@ -76,9 +80,6 @@ nav {
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.5rem;
-  padding-top: calc(1rem + var(--safe-top));
-  padding-left:  calc(1.5rem + var(--safe-l));
-  padding-right: calc(1.5rem + var(--safe-r));
   border-bottom: 1px solid rgba(0,229,255,0.1);
   background: rgba(15,22,36,0.92);
   -webkit-backdrop-filter: blur(12px);
@@ -86,6 +87,7 @@ nav {
   position: sticky;
   top: 0;
   z-index: 100;
+  width: 100%;
 }
 
 .logo {
@@ -143,7 +145,8 @@ nav ul a {
 
 /* ── HERO ── */
 .hero {
-  min-height: 100svh;
+  min-height: 100vh;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -272,6 +275,7 @@ nav ul a {
   background: rgba(22,32,51,0.7);
   padding: 2rem 1.5rem;
   flex-wrap: wrap;
+  width: 100%;
 }
 .stat {
   flex: 1 1 45%;
@@ -366,6 +370,7 @@ nav ul a {
   padding: 4rem 1.5rem;
   background: linear-gradient(180deg, var(--bg0) 0%, #1e2f4a 50%, var(--bg0) 100%);
   text-align: center;
+  width: 100%;
 }
 .spectrum-bar {
   margin: 2.5rem auto;
@@ -409,6 +414,7 @@ nav ul a {
   text-align: center;
   position: relative;
   overflow: hidden;
+  width: 100%;
 }
 .download-cta::before {
   content: '';
@@ -444,13 +450,13 @@ nav ul a {
 footer {
   border-top: 1px solid rgba(255,255,255,0.05);
   padding: 2rem 1.5rem;
-  padding-bottom: calc(2rem + var(--safe-bot));
   background: var(--bg1);
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
+  width: 100%;
 }
 .footer-logo {
   font-family: 'Share Tech Mono', monospace;
@@ -713,10 +719,9 @@ function resizeAll() {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   VW = window.innerWidth;
   VH = window.innerHeight;
-  waveCanvas.width  = radarCanvas.width  = VW * dpr;
-  waveCanvas.height = radarCanvas.height = VH * dpr;
-  waveCanvas.style.width  = radarCanvas.style.width  = VW + 'px';
-  waveCanvas.style.height = radarCanvas.style.height = VH + 'px';
+  // Set actual pixel buffer size (DPR-scaled) but let CSS control display size
+  waveCanvas.width  = radarCanvas.width  = Math.floor(VW * dpr);
+  waveCanvas.height = radarCanvas.height = Math.floor(VH * dpr);
   wCtx = waveCanvas.getContext('2d');
   rCtx = radarCanvas.getContext('2d');
   wCtx.scale(dpr, dpr);
